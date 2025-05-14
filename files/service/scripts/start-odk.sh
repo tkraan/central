@@ -30,7 +30,7 @@ fi
 echo "starting cron.."
 cron -f &
 
-MEMTOT=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+MEMTOT=$(vmstat -s | grep 'total memory' | awk '{ print $1 }')
 if [ "$MEMTOT" -gt "1100000" ]
 then
   export WORKER_COUNT=4
