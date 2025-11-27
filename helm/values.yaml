@@ -1,6 +1,6 @@
 image:
   # -- Registry where the common images can be pulled 
-  registry: "harbor.containers.wurnet.nl/proxy-cache" 
+  registry: "docker.io" 
   # -- Registry where ghcr.io/getodk/* can be pulled from
   odkregistry: "ghcr.io/getodk" 
   pullPolicy: IfNotPresent
@@ -15,7 +15,7 @@ odk:
   existingSecret: ""
   secrets:
     # -- the domain for the ODK Central instance
-    DOMAIN: odk-sandbox.containers-test.wur.nl
+    DOMAIN: yourdomain.tld
     # -- the Enketo API key 
     ENKETO_API_KEY: "enketo_api_key_secret"
     # -- the Enketo Less API key
@@ -33,7 +33,7 @@ odk:
     # -- whether to use TLS for the final mailserver
     EMAIL_SECURE: "true"
     # -- the email address that is used to send emails from the ODK Central instance
-    EMAIL_FROM: "emailfromadress@odk-sandbox.containers-test.wur.nl"
+    EMAIL_FROM: "emailfromadress@yourdomain.tld"
     # -- the database name for the ODK Central instance
     DB_NAME: ""
     # -- the database user for the ODK Central instance
@@ -48,7 +48,7 @@ odk:
   # -- The initial admin user configuration
   user:
     # -- the username for the initial admin user
-    username: "admin@domain.tld" # -- e.g. admin@domain.tld
+    username: "admin@yourdomain.tld" # -- e.g. admin@yourdomain.tld
     # -- the password for the initial admin user
     password: "admin12345678"
     existingSecret: ""
@@ -226,17 +226,15 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-body-size: 512m
     nginx.ingress.kubernetes.io/proxy-read-timeout: "25600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "25600"
-    cert-manager.io/cluster-issuer: harica
-    cert-manager.io/usages: digital signature
     ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/backend-protocol: HTTP
     nginx.ingress.kubernetes.io/enable-global-auth: "false"
   hosts:
-    - host: odk-sandbox.containers-test.wur.nl
+    - host: yourdomain.tld
       paths:
         - path: /
           pathType: Prefix
   tls:
-    - secretName: odk-sandbox.containers-test.wur.nl
+    - secretName: yourdomain.tld
       hosts:
-        - odk-sandbox.containers-test.wur.nl
+        - yourdomain.tld
