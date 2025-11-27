@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ include "odk.fullname" . }}-pyxform
+    version: "1.12.1"
+  name: {{ include "odk.fullname" . }}-pyxform
+spec:
+  replicas: {{ .Values.pyxform.replicas }}
+  selector:
+    matchLabels:
+      app: {{ include "odk.fullname" . }}-pyxform
+  template:
+    metadata:
+      labels:
+        app: {{ include "odk.fullname" . }}-pyxform
+    spec:
+      containers:
+        - image: harbor.containers.wurnet.nl/proxy-cache/getodk/pyxform-http:v1.12.1
+          name: pyxform
+          ports:
+          - containerPort: 80
+          resources:
+            {{- toYaml .Values.pyxform.resources | nindent 12 }}
+      restartPolicy: Always

@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ include "odk.fullname" . }}-nginx
+    version: "1.0"
+  name: {{ include "odk.fullname" . }}-nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "odk.fullname" . }}-nginx
+  template:
+    metadata:
+      labels:
+        app: {{ include "odk.fullname" . }}-nginx
+    spec:
+      containers:
+        - env:
+            - name: OIDC_ENABLED
+              value: "false"
+            - name: CERTBOT_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "odk.fullname" . }}
+                  key: SUPPORT_EMAIL
+            - name: DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "odk.fullname" . }}
+                  key: DOMAIN
+            - name: SSL_TYPE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "odk.fullname" . }}
+                  key: SSL_TYPE
+          image: "{{ .Values.image.odkregistry }}/central-nginx:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: Always
+          command: ["/bin/sh", "-c"]
+          args:
+            - cp /usr/share/odk/nginx/tmp/odk.conf.template /usr/share/odk/nginx/odk.conf.template ;
+              cp /usr/share/odk/nginx/tmp/client-config.json.template /usr/share/odk/nginx/client-config.json.template ;
+              sed -i '/csp-report/,+2d' /usr/share/odk/nginx/odk.conf.template ;
+              sed -i 's/enketo:8005/{{ include "odk.fullname" . }}-enketo:8005/' /usr/share/odk/nginx/odk.conf.template ;
+              sed -i 's/service:8383/{{ include "odk.fullname" . }}-service:8383/' /usr/share/odk/nginx/odk.conf.template ;
+              chmod +x /scripts/setup-odk.sh ;
+              /scripts/setup-odk.sh
+          name: nginx
+          ports:
+            - containerPort: 80
+            - containerPort: 443
+          resources:
+            {{- toYaml .Values.nginx.resources | nindent 12 }}
+          volumeMounts:
+          - name: config
+            mountPath: //usr/share/odk/nginx/tmp
+ #           subpath: odk.conf.template
+      volumes:
+      - name: config
+        configMap:
+          name: {{ include "odk.fullname" . }}-nginx-config-template  
+          defaultMode: 0666
+      restartPolicy: Always

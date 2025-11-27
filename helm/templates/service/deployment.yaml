@@ -1,0 +1,187 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ include "odk.fullname" . }}-service
+    version: {{ .Values.image.tag | default .Chart.AppVersion | quote }}
+  name: {{ include "odk.fullname" . }}-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "odk.fullname" . }}-service
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ include "odk.fullname" . }}-service
+    spec:
+      containers:
+        - name: service
+          command:
+          - /bin/bash
+          args:
+          - -c
+          - |
+            set -x
+            until nc -z -w 5 $POSTGRES_SERVICE 5432; do
+                echo "Waiting for Postgres service to be ready..."
+                sleep 5
+            done
+            echo "Postgres service is up - starting ODK Central"
+            echo "Creating admin user if not exists..."
+            nohup bash -c "until nc -z -w 5 localhost 8383; do sleep 5; done; echo 'Creating admin user if not exists...'; (printf $ODK_ADMIN_PASSWORD | odk-cmd user-create -u $ODK_ADMIN_USERNAME) || true; odk-cmd user-promote -u $ODK_ADMIN_USERNAME || true" &
+            ./start-odk.sh
+          env:
+{{- if .Values.service.env }}
+{{ .Values.service.env | toYaml | indent 12 }}                      
+{{- end }}
+            - name: POSTGRES_SERVICE
+            {{- if and .Values.postgresql.enabled (eq .Values.postgresql.architecture "replication") }}
+              value: {{ .Release.Name  }}-postgresql-primary-hl 
+            {{ else if and .Values.postgresql.enabled (eq .Values.postgresql.architecture "standalone") }}
+              value: {{ .Release.Name  }}-postgresql-hl
+            {{- else if .Values.odk.secrets.DB_HOST }}
+              value: {{ .Values.odk.secrets.DB_HOST }} 
+            {{- else if .Values.odk.existingSecret }}
+              value: $(DB_HOST) 
+            {{- else }}
+              value: postgres 
+            {{- end }}
+            - name: HTTPS_PORT
+              value: '443'
+            - name: NODE_EXTRA_CA_CERTS
+              value: /usr/local/share/ca-certificates/sectigo.pem
+            - name: DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "odk.fullname" . }}
+                  key: DOMAIN
+            - name: SYSADMIN_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "odk.fullname" . }}
+                  key: SUPPORT_EMAIL
+{{ if .Values.postfix.enabled }}
+            - name: EMAIL_HOST
+              value: {{ include "odk.fullname" . }}-postfix
+            - name: EMAIL_PORT
+              value: '25'
+            - name: EMAIL_SECURE
+              value: 'false'
+            - name: EMAIL_USER
+              value: ""
+            - name: EMAIL_PASSWORD
+              value: ""
+{{- else if .Values.odk.existingSecret }}
+            - name: EMAIL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.existingSecret }}
+                  key: EMAIL_HOST
+            - name: EMAIL_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.existingSecret }}
+                  key: EMAIL_PORT
+            - name: EMAIL_SECURE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.existingSecret }}
+                  key: EMAIL_SECURE
+            - name: EMAIL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.existingSecret }}
+                  key: EMAIL_USER
+            - name: EMAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.existingSecret }}
+                  key: EMAIL_PASSWORD
+{{- else }}
+            - name: EMAIL_HOST
+              value: {{ .Values.odk.secrets.EMAIL_HOST }}
+            - name: EMAIL_PORT
+              value: {{ .Values.odk.secrets.EMAIL_PORT }}
+            - name: EMAIL_SECURE
+              value: {{ .Values.odk.secrets.EMAIL_SECURE }}
+            - name: EMAIL_USER
+              value: {{ .Values.odk.secrets.EMAIL_USER }}
+            - name: EMAIL_PASSWORD
+              value: {{ .Values.odk.secrets.EMAIL_PASSWORD }}
+{{- end }}
+{{ if .Values.odk.user.existingSecret }}
+            - name: ODK_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.user.existingSecret }}
+                  key: username
+            - name: ODK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.user.existingSecret }}
+                  key: password
+{{- else if and .Values.odk.user.username (not .Values.odk.user.existingSecret) }}
+            - name: ODK_ADMIN_USERNAME
+              value: {{ .Values.odk.user.username }}
+            - name: ODK_ADMIN_PASSWORD
+              value: {{ .Values.odk.user.password }}
+{{- end }}
+          # Version 1.6 doesnt use authentication in SMTP
+          image: "{{ .Values.image.odkregistry }}/central-service:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: Always
+          envFrom:
+          - secretRef:
+              name: {{ .Values.odk.existingSecret | default (include "odk.fullname" .) }}
+          resources:
+            {{- toYaml .Values.service.resources | nindent 12 }}
+          ports:
+          - containerPort: 8383
+          volumeMounts:
+          - name: {{ include "odk.fullname" . }}-service-transfer
+            mountPath: /data/transfer
+          - name: odk-config-template
+            mountPath: /usr/share/odk/config.json.template
+            subPath: config.json.template
+          - name: secrets
+            mountPath: /etc/secrets
+            readOnly: true
+          - name: wur-sectigo
+            mountPath: /usr/local/share/ca-certificates/sectigo.pem
+            subPath: sectigo.pem
+            readOnly: true
+
+      volumes:
+      - name: {{ include "odk.fullname" . }}-service-transfer
+        persistentVolumeClaim:
+          claimName: {{ include "odk.fullname" . }}-service-transfer
+      - name: secrets
+        secret:
+          {{- if .Values.odk.existingSecret }}
+          secretName: {{ .Values.odk.existingSecret }}
+          {{- else }}
+          secretName: {{ include "odk.fullname" . }}
+          {{- end }}
+          items:
+          - key: ENKETO_API_KEY
+            path: enketo-api-key
+          - key: ENKETO_LESS_SECRET
+            path: enketo-less-secret
+          - key: ENKETO_SECRET
+            path: enketo-secret
+      - name: odk-config-template
+        configMap:
+          name: {{ include "odk.fullname" . }}-service-config-template
+          items:
+          - key: config.json.template
+            path: config.json.template
+      - name: wur-sectigo
+        configMap:
+          name: {{ include "odk.fullname" . }}
+          items:
+          - key: sectigo.pem
+            path: sectigo.pem           
+      restartPolicy: Always
+      

@@ -1,0 +1,28 @@
+
+
+##########################################################################
+##                        INSTALLATION FINISHED                         ##
+##########################################################################
+
+Allow a few minutes to finish startup, then follow the manual steps as shown below:
+
+
+1. When the deployment has finished, you need to manually create an admin user as described in the documentation.
+Create the user:
+  kubectl exec deployment/{{ include "odk.fullname" . }}-service -it -n {{ .Release.Namespace }} -- odk-cmd --email YOUREMAIL@ADDRESSHERE.com user-create
+Promote the user:
+  kubectl exec deployment/{{ include "odk.fullname" . }}-service -it -n {{ .Release.Namespace }} -- odk-cmd --email YOUREMAIL@ADDRESSHERE.com user-promote
+
+
+If necessary in the future, you can reset a password as follows: 
+    kubectl exec deployment/{{ include "odk.fullname" . }}-service -it -n {{ .Release.Namespace }} -- odk-cmd --email YOUREMAIL@ADDRESSHERE.com user-set-password
+
+{{- if .Values.ingress.enabled }}
+
+2. Next, visit the application URL and try to login with your credentials:
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{ end }}

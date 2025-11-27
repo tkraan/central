@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ include "odk.fullname" . }}-enketo-redis-main
+    version: "1.0"
+  name: {{ include "odk.fullname" . }}-enketo-redis-main
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "odk.fullname" . }}-enketo-redis-main
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ include "odk.fullname" . }}-enketo-redis-main
+    spec:
+      containers:
+      - image: harbor.containers.wurnet.nl/proxy-cache/library/redis:7.0.11
+        name: redis
+        command:
+        - redis-server
+        - /usr/local/etc/redis/redis.conf
+        ports:
+        - containerPort: 6379
+        resources:
+          {{- toYaml .Values.redis.main.resources | nindent 12 }}
+        volumeMounts:
+          - name: {{ include "odk.fullname" . }}-redis-main
+            mountPath: /usr/local/etc/redis
+            readOnly: true
+          - name: {{ include "odk.fullname" . }}-enketo-redis-main-data
+            mountPath: /data
+      volumes:
+      - name: {{ include "odk.fullname" . }}-redis-main
+        configMap:
+          name: {{ include "odk.fullname" . }}-redis-main
+      {{- if .Values.redis.persistence.enabled }}
+      - name: {{ include "odk.fullname" . }}-enketo-redis-main-data
+        persistentVolumeClaim:
+          claimName: {{ include "odk.fullname" . }}-enketo-redis-main-data
+      {{- else }}
+      - name: {{ include "odk.fullname" . }}-enketo-redis-main-data
+        emptyDir: {}
+      {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always

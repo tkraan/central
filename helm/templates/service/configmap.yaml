@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "odk.fullname" . }}-service-config-template
+data:
+  config.json.template: |-
+    {
+      "default": {
+        "database": {
+          "host": "${DB_HOST}",
+          "user": "${DB_USER}",
+          "password": "${DB_PASSWORD}",
+          "database": "${DB_NAME}"
+        },
+        "email": {
+          "serviceAccount": "${EMAIL_FROM}",
+          "transport": "smtp",
+          "transportOpts": {
+            {{- if .Values.postfix.enabled }}
+            "host": "{{ include "odk.fullname" . }}-postfix",
+            "port": 25
+            {{- else }}
+            "host": "${EMAIL_HOST}",
+            "port": "${EMAIL_PORT}"
+            {{- end }}
+          }
+        },
+        "xlsform": {
+          "host": "{{ include "odk.fullname" . }}-pyxform",
+          "port": 80
+        },
+        "enketo": {
+          "url": "http://{{ include "odk.fullname" . }}-enketo:8005/-",
+          "apiKey": "${ENKETO_API_KEY}"
+        },
+        "env": {
+          "domain": "https://${DOMAIN}",
+          "sysadminAccount": "${SYSADMIN_EMAIL}"
+        },
+        "external": {}
+      }
+    }

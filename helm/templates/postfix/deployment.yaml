@@ -1,0 +1,47 @@
+{{ if .Values.postfix.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ include "odk.fullname" . }}-postfix
+    version: "1.0"
+  name: {{ include "odk.fullname" . }}-postfix
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "odk.fullname" . }}-postfix
+  template:
+    metadata:
+      labels:
+        app: {{ include "odk.fullname" . }}-postfix
+    spec:
+      containers:
+        - image: harbor.containers.wurnet.nl/wur/postfix-mailrelay:latest
+          name: postfix
+          ports:
+          - containerPort: 25
+          env:
+          - name: SMTP_SERVER
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.odk.existingSecret | default (include "odk.fullname" .) }}
+                key: EMAIL_HOST
+          - name: SMTP_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.odk.existingSecret | default (include "odk.fullname" .) }}
+                key: EMAIL_USER
+          - name: SMTP_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.odk.existingSecret | default (include "odk.fullname" .) }}
+                key: EMAIL_PASSWORD
+          - name: SERVER_HOSTNAME
+            value: {{ .Values.postfix.serverHostname }}
+          - name: OVERWRITE_FROM
+            value: {{ .Values.postfix.overwriteFrom | default "" }}
+          resources:
+            {{- toYaml .Values.postfix.resources | nindent 12 }}
+      restartPolicy: Always
+{{ end }}

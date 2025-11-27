@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ include "odk.fullname" . }}-enketo
+    {{- include "odk.labels" . | nindent 4 }}
+  name: {{ include "odk.fullname" . }}-enketo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "odk.fullname" . }}-enketo
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ include "odk.fullname" . }}-enketo
+    spec:
+      containers:
+        - env:
+            - name: DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "odk.fullname" . }}
+                  key: DOMAIN
+            - name: SUPPORT_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "odk.fullname" . }}
+                  key: SUPPORT_EMAIL
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.existingSecret | default (include "odk.fullname" .) }}
+                  key: ENKETO_SECRET
+            - name: LESS_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.existingSecret | default (include "odk.fullname" .) }}
+                  key: ENKETO_LESS_SECRET
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.existingSecret | default (include "odk.fullname" .) }}
+                  key: ENKETO_API_KEY
+          image: "{{ .Values.enketo.image }}"
+          name: enketo
+          command: ["/bin/sh", "-c"]
+          args:
+            - BASE_URL=$( [ "${HTTPS_PORT}" = 443 ] && echo https://"${DOMAIN}" || echo https://"${DOMAIN}":"${HTTPS_PORT}" ) ;
+              envsubst < /srv/src/enketo/packages/enketo-express/config/tmp/config.json.template > /srv/src/enketo/packages/enketo-express/config/config.json ;
+              yarn workspace enketo-express start
+          resources:
+            {{- toYaml .Values.enketo.resources | nindent 12 }}
+          envFrom:
+          - secretRef:
+              name: {{ .Values.odk.existingSecret | default (include "odk.fullname" .) }}
+          ports:
+          - containerPort: 8005
+          volumeMounts:
+          - name: config
+            mountPath: /srv/src/enketo/packages/enketo-express/config/tmp
+            subpath: config.json.template
+      restartPolicy: Always
+      volumes:
+      - name: config
+        configMap:
+          name: {{ include "odk.fullname" . }}-enketo-config-template  
+          defaultMode: 0666

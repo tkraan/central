@@ -1,0 +1,123 @@
+{{ if .Values.postgresql.backups.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "odk.fullname" . }}-daily-backup
+{{ with .Values.postgresql.backups }}  
+spec:
+  schedule: {{ .schedule }}
+  successfulJobsHistoryLimit: {{ .keepjobs | default 3 }}
+  concurrencyPolicy: Replace
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          {{ end }}
+          restartPolicy: Never
+          volumes:
+            - name: retention-config
+              configMap:
+                name: {{ include "odk.fullname" . }}-daily-backup-retention
+                items: 
+                  - key: lifecycle.json
+                    path: lifecycle.json
+          containers:
+          {{ with .Values.postgresql.backups }}
+          - name: psqldump
+            image: {{ .image | default "harbor.containers.wurnet.nl/wur/awscli:latest" }}
+            imagePullPolicy: Always
+            command: ["/bin/bash","-c"]
+            {{ end }}
+            args: ["aws --endpoint-url $ENDPOINT_URL s3api put-bucket-lifecycle-configuration --bucket $BUCKET_NAME --lifecycle-configuration file://lifecycle.json && pg_dump --host=$DB_HOST --username=$DB_USER --format=plain $DB_NAME | gzip -9 | aws --endpoint-url $ENDPOINT_URL s3 cp - s3://$BUCKET_NAME/$BUCKET_PATH/$(date +'%Y-%m-%d')-{{ include "odk.fullname" . }}-daily-backup.sql.gz"]
+            volumeMounts:
+              - name: retention-config
+                mountPath: /aws/lifecycle.json
+                subPath: lifecycle.json
+            envFrom:
+            - secretRef:
+                # As used by the awscli S3 client
+                name: {{ .Values.postgresql.backups.existingSecret | default (printf "daily-backup-%s-credentials" (include "odk.fullname" .)) }} 
+            {{ with .Values.postgresql.backups }}                  
+            env:
+            # Use custom CA_BUNDLE to avoid broken SSL validation
+            - name: AWS_CA_BUNDLE
+              value: /etc/pki/ca-trust/source/anchors/wur-bundle.pem
+            - name: BUCKET_NAME
+              value: {{ .bucketName }}
+            - name: BUCKET_PATH
+              value: {{ .bucketPath }}
+            {{ end }}
+            {{- if .Values.postgresql.enabled }}
+            {{- if .Values.odk.existingSecret }}
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.existingSecret }}
+                  key: DB_HOST
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.existingSecret }}
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.existingSecret }}
+                  key: DB_USER
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.existingSecret }}
+                  key: DB_PASSWORD
+            {{- else }}
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "odk.fullname" . }}
+                  key: DB_HOST
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "odk.fullname" . }}
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "odk.fullname" . }}
+                  key: DB_USER
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "odk.fullname" . }}
+                  key: DB_PASSWORD
+            {{- end }}
+            {{- else }}
+            - name: DB_HOST
+              value: {{ .Values.odk.secrets.DB_HOST }}
+            - name: DB_NAME
+              value: {{ .Values.odk.secrets.DB_NAME }}
+            - name: DB_USER
+              value: {{ .Values.odk.secrets.DB_USER }}
+            - name: PGPASSWORD
+              value: {{ .Values.odk.secrets.DB_PASSWORD }}
+            {{- end }}
+            {{- if .Values.postgresql.backups.resources }}
+            {{- with .Values.postgresql.backups }} 
+            resources:
+              requests:
+                cpu: {{ .resources.requests.cpu  }}
+                memory: {{ .resources.requests.memory }}
+              limits:
+                cpu: {{ .resources.limits.cpu }}
+                memory: {{ .resources.limits.memory }}         
+            {{- end }}
+            {{- else }}
+            resources:
+              requests:
+                cpu: 1100m
+                memory: 1024Mi
+              limits:
+                cpu: 2000m
+                memory: 2048Mi
+            {{ end }}
+{{ end }}

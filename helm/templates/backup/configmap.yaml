@@ -1,0 +1,23 @@
+{{ if .Values.postgresql.backups.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: {{ template "odk.fullname" . }}-daily-backup-retention
+data:
+  lifecycle.json: |-
+    {
+        "Rules": [
+            {
+                "ID": "{{ template "odk.fullname" . }}-daily-backup-retention",
+                "Filter": {
+                    "Prefix": "{{ .Values.postgresql.backups.bucketPath }}"
+                },
+                "Status": "Enabled",
+                "NoncurrentVersionExpiration": {
+                    "NoncurrentDays": {{ .Values.postgresql.backups.bucketLifeCycle }}
+                }
+            }
+        ]
+    }
+{{ end }}
