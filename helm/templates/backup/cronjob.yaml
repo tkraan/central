@@ -24,7 +24,7 @@ spec:
           containers:
           {{ with .Values.postgresql.backups }}
           - name: psqldump
-            image: {{ .image | default "harbor.containers.wurnet.nl/wur/awscli:latest" }}
+            image: {{ .image | default "hawscli:latest" }}
             imagePullPolicy: Always
             command: ["/bin/bash","-c"]
             {{ end }}

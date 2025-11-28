@@ -18,7 +18,7 @@ spec:
         app: {{ include "odk.fullname" . }}-enketo-redis-main
     spec:
       containers:
-      - image: harbor.containers.wurnet.nl/proxy-cache/library/redis:7.0.11
+      - image: redis:7.0.11
         name: redis
         command:
         - redis-server

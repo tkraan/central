@@ -16,7 +16,7 @@ spec:
         app: {{ include "odk.fullname" . }}-pyxform
     spec:
       containers:
-        - image: harbor.containers.wurnet.nl/proxy-cache/getodk/pyxform-http:v1.12.1
+        - image: {{ .Values.image.odkregistry }}/pyxform-http:v1.12.1
           name: pyxform
           ports:
           - containerPort: 80

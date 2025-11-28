@@ -17,7 +17,7 @@ spec:
         app: {{ include "odk.fullname" . }}-postfix
     spec:
       containers:
-        - image: harbor.containers.wurnet.nl/wur/postfix-mailrelay:latest
+        - image: postfix-mailrelay:latest
           name: postfix
           ports:
           - containerPort: 25
