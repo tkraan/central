@@ -78,14 +78,14 @@ service:
 
 # Configuration for the ODK Central enketo service
 enketo:
-  image: enketo:7.5.1
+  image: ghcr.io/enketo/enketo:7.5.0
   resources:
     requests:
       memory: "256Mi"
-      cpu: "500m"
+      cpu: "250m"
     limits:
-      memory: "1024Mi"
-      cpu: "1000m"
+      memory: "512Mi"
+      cpu: "500m"
 
 # Configuration for the ODK Central nginx service
 nginx:

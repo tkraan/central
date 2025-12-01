@@ -60,8 +60,8 @@ spec:
           - containerPort: 8005
           volumeMounts:
           - name: config
-            mountPath: /srv/src/enketo/packages/enketo-express/config/tmp
-            subpath: config.json.template
+            mountPath: /srv/src/enketo/packages/enketo-express/config/tmp/config.json.template
+            subPath: config.json.template
       restartPolicy: Always
       volumes:
       - name: config

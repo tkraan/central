@@ -17,7 +17,7 @@ spec:
         app: {{ include "odk.fullname" . }}-postfix
     spec:
       containers:
-        - image: postfix-mailrelay:latest
+        - image: juanluisbaptiste/postfix:latest
           name: postfix
           ports:
           - containerPort: 25
