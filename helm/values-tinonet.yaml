@@ -15,7 +15,7 @@ odk:
   existingSecret: ""
   secrets:
     # -- the domain for the ODK Central instance
-    DOMAIN: odkcentral.yourdomain.tld
+    DOMAIN: odkcentral.k8s.tinonet.nl
     # -- the Enketo API key 
     ENKETO_API_KEY: "enketo_api_key_secret"
     # -- the Enketo Less API key
@@ -33,7 +33,7 @@ odk:
     # -- whether to use TLS for the final mailserver
     EMAIL_SECURE: "true"
     # -- the email address that is used to send emails from the ODK Central instance
-    EMAIL_FROM: "odkcentral@yourdomain.tld"
+    EMAIL_FROM: "odkcentral@tinonet.nl"
     # -- the database name for the ODK Central instance
     DB_NAME: ""
     # -- the database user for the ODK Central instance
@@ -62,7 +62,7 @@ service:
   persistence:
     enabled: true
     size: 500Mi
-    storageClass: default
+    storageClass: proxmox-data-usb
     accessMode: ReadWriteOnce
   resources:
     requests:
@@ -102,7 +102,7 @@ nginx:
 # Configuration for the ODK Central mail service
 postfix:
   enabled: true
-  serverHostname: postfix.yourdomain.tld
+  serverHostname: odk-sandbox.containers-test.wur.nl
   resources:
     requests:
       memory: "64Mi"
@@ -110,14 +110,14 @@ postfix:
     limits:
       memory: "128Mi"
       cpu: "100m"
-  overwriteFrom: "ODK Sandbox <noreply@odkcentral.yourdomain.tld>"
+  overwriteFrom: "ODK Sandbox <noreply@odk-sandbox.containers-test.wur.nl>"
 
 # Configuration for the ODK Central redis service
 redis:
   persistence:
     enabled: true
     size: 500Mi
-    storageClass: default
+    storageClass: proxmox-data-usb
     accessMode: ReadWriteOnce
   cache:
     resources:
@@ -151,7 +151,7 @@ pyxform:
 # Inherited from the Bitnami PostgreSQL chart
 # Values for the postgresql chart can be found here:https://github.com/bitnami/charts/blob/main/bitnami/postgresql/README.md
 postgresql:
-  global.defaultStorageClass: default
+  global.defaultStorageClass: proxmox-data-usb
   enabled: true
   # Backup configuration for the ODK Central PostgreSQL database
   # Writes postgresql dumps to an S3 compatible bucket.
@@ -164,7 +164,7 @@ postgresql:
     bucketName: ""
     bucketPath: ""
     # These following 3 keys are ignored if a existingsecret is defined
-    bucketEndpoint: "https://s3.yourdomain.tld" # Leave empty when existingSecret is set
+    bucketEndpoint: "https://scality02.wurnet.nl" # Leave empty when existingSecret is set
     bucketAccessKeyId: "" # Leave empty when existingSecret is set
     bucketSecretAccessKey: "" # Leave empty when existingSecret is set
     ## Existing Secret
@@ -234,11 +234,11 @@ ingress:
     nginx.ingress.kubernetes.io/backend-protocol: HTTP
     nginx.ingress.kubernetes.io/enable-global-auth: "false"
   hosts:
-    - host: odkcentral.yourdomain.tld
+    - host: odkcentral.k8s.tinonet.nl
       paths:
         - path: /
           pathType: Prefix
   tls:
-    - secretName: odkcentral.yourdomain.tld
+    - secretName: odkcentral.k8s.tinonet.nl
       hosts:
-        - odkcentral.yourdomain.tld
+        - odkcentral.k8s.tinonet.nl
