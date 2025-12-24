@@ -42,8 +42,10 @@ odk:
     DB_PASSWORD: ""
     # -- the database host for the ODK Central instance
     DB_HOST: ""
-    # -- SSL mode for the database connection
-    DB_SSL: true
+    # -- use true for full verification, false to disable verification, no-verify to skip verification but use SSL
+    PGSSLMODE: "true"
+    # -- SSL mode for the nginx server
+    SSL_TYPE: "upstream" # -- options are: none, selfsigned, certbot, upstream
 
   # -- The initial admin user configuration
   user:

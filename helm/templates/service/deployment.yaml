@@ -100,6 +100,16 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.odk.existingSecret }}
                   key: EMAIL_PASSWORD
+            - name: PGSSLMODE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.existingSecret }}
+                  key: {{ .Values.odk.secrets.PGSSLMODE | quote }}
+            - name: SSL_TYPE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.existingSecret }}
+                  key: {{ .Values.odk.secrets.SSL_TYPE | quote }} 
 {{- else }}
             - name: EMAIL_HOST
               value: {{ .Values.odk.secrets.EMAIL_HOST }}
@@ -111,6 +121,10 @@ spec:
               value: {{ .Values.odk.secrets.EMAIL_USER }}
             - name: EMAIL_PASSWORD
               value: {{ .Values.odk.secrets.EMAIL_PASSWORD }}
+            - name: PGSSLMODE
+              value: {{ .Values.odk.secrets.PGSSLMODE | quote }}
+            - name: SSL_TYPE
+              value: {{ .Values.odk.secrets.SSL_TYPE | quote }}
 {{- end }}
 {{ if .Values.odk.user.existingSecret }}
             - name: ODK_ADMIN_USERNAME
