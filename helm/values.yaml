@@ -55,10 +55,10 @@ odk:
     password: "admin12345678"
     existingSecret: ""
 
-# Configuration for the ODK Central service deployment
-# The service is the main component of ODK Central, handling requests and serving the web application.
+# -- Configuration for the ODK Central service deployment
+# -- The service is the main component of ODK Central, handling requests and serving the web application.
 service:
-  # Storage configuration for the service
+  # -- Storage configuration for the service
   persistence:
     enabled: true
     size: 500Mi
@@ -71,15 +71,16 @@ service:
     limits:
       memory: "2048Mi"
       cpu: "500m"
-  # Node options for the service, such as memory limits for Node.js
-  # Set SERVICE_NODE_OPTIONS='--max-old-space-size=...'
-  # to roughly 75% of service.resources.limits.memory
+  # -- Node options for the service, such as memory limits for Node.js
+  # -- Set SERVICE_NODE_OPTIONS='--max-old-space-size=...'
+  # -- to roughly 75% of service.resources.limits.memory
   env:
     - name: SERVICE_NODE_OPTIONS
       value: "--max-old-space-size=1536"
 
-# Configuration for the ODK Central enketo service
+# -- Configuration for the ODK Central enketo service
 enketo:
+  # -- Enketo image to pull
   image: ghcr.io/enketo/enketo:7.5.0
   resources:
     requests:
@@ -89,7 +90,7 @@ enketo:
       memory: "512Mi"
       cpu: "500m"
 
-# Configuration for the ODK Central nginx service
+# -- Configuration for the ODK Central nginx service
 nginx:
   resources:
     requests:
@@ -99,7 +100,7 @@ nginx:
       memory: "64Mi"
       cpu: "200m"
 
-# Configuration for the ODK Central mail service
+# -- Configuration for the ODK Central mail service
 postfix:
   enabled: true
   serverHostname: postfix.yourdomain.tld
@@ -112,7 +113,8 @@ postfix:
       cpu: "100m"
   overwriteFrom: "ODK Sandbox <noreply@odkcentral.yourdomain.tld>"
 
-# Configuration for the ODK Central redis service
+# -- Configuration for the ODK Central redis service
+# -- The standard Redis images can be found on Docker hub
 redis:
   persistence:
     enabled: true
@@ -136,7 +138,7 @@ redis:
         memory: "64Mi"
         cpu: "200m"
 
-# Configuration for the ODK Central pyxform service
+# -- Configuration for the ODK Central pyxform service
 pyxform:
   replicas: 1
   resources:
@@ -147,27 +149,28 @@ pyxform:
       cpu: 250m
       memory: 256Mi
 
-# Configuration for the ODK Central postgresql service
-# Inherited from the Bitnami PostgreSQL chart
-# Values for the postgresql chart can be found here:https://github.com/bitnami/charts/blob/main/bitnami/postgresql/README.md
+# -- Configuration for the ODK Central postgresql service
+# -- Inherited from the Bitnami PostgreSQL chart
+# -- Values for the postgresql chart can be found here:https://github.com/bitnami/charts/blob/main/bitnami/postgresql/README.md
 postgresql:
   global.defaultStorageClass: default
   enabled: true
-  # Backup configuration for the ODK Central PostgreSQL database
-  # Writes postgresql dumps to an S3 compatible bucket.
+  # -- Backup configuration for the ODK Central PostgreSQL database
+  # -- Writes postgresql dumps to an S3 compatible bucket.
   backups:
     enabled: false
-    # Cronjob schedule for the backup job. Please keep in mind that the system is running in UTC!
+    # -- Cronjob schedule for the backup job. Please keep in mind that the system is running in UTC!
     schedule: "37 03 * * *"
-    # Define how many cronjobs history needs to be retained in Kubernetes.
+    # -- Define how many cronjobs history needs to be retained in Kubernetes.
     keepJobs: 1
     bucketName: ""
     bucketPath: ""
-    # These following 3 keys are ignored if a existingsecret is defined
+    # -- S3 endpoint configuration for postgresql backups
+    # -- These following 3 keys are ignored if a existingsecret is defined
     bucketEndpoint: "https://s3.yourdomain.tld" # Leave empty when existingSecret is set
     bucketAccessKeyId: "" # Leave empty when existingSecret is set
     bucketSecretAccessKey: "" # Leave empty when existingSecret is set
-    ## Existing Secret
+    ## -- Existing Secret for S3
     # Create a seperate secret that contains the following keys:
     # ENDPOINT_URL = [URL of S3 endpoint]
     # AWS_ACCESS_KEY_ID = [Access ID of S3 Endpoint]
@@ -189,12 +192,13 @@ postgresql:
     password: "odkcentral" # Only set when existingSecret is not configured.
     # replicationPassword: "tpsgodkcentral" # Only set when architecture is set to "replication".
 
-    ## Name of existing secret to use for PostgreSQL credentials.
+    ## -- Name of existing secret to use for PostgreSQL credentials.
     ## `auth.postgresPassword`, `auth.password`, and `auth.replicationPassword` will be ignored and picked up from this secret.
     ## The secret might also contains the key `ldap-password` if LDAP is enabled. `ldap.bind_password` will be ignored and picked from this secret in this case.
     # existingSecret: postgres
-
+  # -- The postgresql archictectue
   architecture: standalone
+  # -- Resources for the primary postgresql cluster
   primary:
     resources:
       limits:
@@ -221,7 +225,7 @@ postgresql:
   metrics:
     enabled: false
 
-# Configuration for the ODK Central ingress
+# -- Configuration for the ODK Central ingress
 ingress:
   enabled: true
   className: public

@@ -1,6 +1,6 @@
 apiVersion: v2
 name: odk
-version: 0.0.0
+version: 1.0.0
 description: The standard for mobile data collection
 type: application
 keywords:
@@ -15,7 +15,7 @@ sources:
   - https://github.com/getodk/central
   - https://github.com/getodk/central/pkgs/container/central-service/versions?filters[version_type]=tagged
 icon: https://getodk.b-cdn.net/uploads/default/original/2X/6/6fb0508875767065fdf0afeef7d0ed4b79c0bce3.png
-appVersion: v2025.3.1
+appVersion: v2025.4.0
 dependencies:
 - condition: postgresql.enabled
   name: postgresql
