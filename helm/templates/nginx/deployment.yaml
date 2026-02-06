@@ -17,13 +17,16 @@ spec:
     spec:
       containers:
         - env:
+            - name: SENTRY_ORG_SUBDOMAIN
+              value: ""
+            - name: SENTRY_PROJECT
+              value: ""
+            - name: SENTRY_KEY  
+              value: ""
             - name: OIDC_ENABLED
               value: "false"
             - name: CERTBOT_EMAIL
               valueFrom:
-                configMapKeyRef:
-                  name: {{ include "odk.fullname" . }}
-                  key: SUPPORT_EMAIL
             - name: DOMAIN
               valueFrom:
                 configMapKeyRef:
@@ -40,9 +43,11 @@ spec:
           args:
             - cp /usr/share/odk/nginx/tmp/odk.conf.template /usr/share/odk/nginx/odk.conf.template ;
               cp /usr/share/odk/nginx/tmp/client-config.json.template /usr/share/odk/nginx/client-config.json.template ;
-              sed -i '/csp-report/,+2d' /usr/share/odk/nginx/odk.conf.template ;
+              cp /usr/share/odk/nginx/tmp/common-headers.conf /usr/share/odk/nginx/common-headers.conf ;
+              cp /usr/share/odk/nginx/tmp/backend.conf /usr/share/odk/nginx/backend.conf ;
               sed -i 's/enketo:8005/{{ include "odk.fullname" . }}-enketo:8005/' /usr/share/odk/nginx/odk.conf.template ;
               sed -i 's/service:8383/{{ include "odk.fullname" . }}-service:8383/' /usr/share/odk/nginx/odk.conf.template ;
+              sed -i 's/service:8383/{{ include "odk.fullname" . }}-service:8383/' /usr/share/odk/nginx/backend.conf ;
               chmod +x /scripts/setup-odk.sh ;
               /scripts/setup-odk.sh
           name: nginx
