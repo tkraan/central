@@ -1,0 +1,32 @@
+## Create helm documentation for the new release
+add-documentation:
+  stage: add-documentation
+  allow_failure: true
+  extends:
+    - .base
+  image:
+    name: harbor.containers.wurnet.nl/proxy-cache/jnorwood/helm-docs:v1.11.0
+    entrypoint: [""]
+  before_script:
+    - apk add --no-cache git git-lfs openssh ca-certificates
+    - mkdir ~/.ssh
+    - ssh-keyscan -H git.wur.nl >> ~/.ssh/known_hosts
+  script:
+    - git remote set-url origin https://ci-token:${GL_TOKEN}@git.wur.nl/kubernetes/charts/odk.git
+    - git clone https://ci-token:${GL_TOKEN}@git.wur.nl/kubernetes/charts/odk.git
+    - cd odk
+    - helm-docs --chart-search-root . --output-file README-generated.md
+    - cat README-orig.md > README.md
+    - cat README-generated.md >> README.md
+    - |
+      if [[ -n "$(git status -s)" ]]; then
+        git config user.name "CI/CD Bot"
+        git config user.email "cicd-bot@example.com"
+        git add README.md
+        git commit -m "documentation update README.md with latest chart documentation"
+        git push origin HEAD:$CI_COMMIT_REF_NAME
+      fi
+  needs:
+    - job: 'validate:lint'
+    - job: 'validate:defaults:kubeval'
+    - job: 'validate:defaults:kubescore'

@@ -1,0 +1,40 @@
+## validation template
+.validate:
+  stage: lint
+  extends:
+    - .base
+  image: harbor.containers.wurnet.nl/wur/k8s-validation:2.6.7
+  before_script:
+    - helm repo add bitnami https://charts.bitnami.com/bitnami
+    - helm repo update
+    - helm dependency build
+
+## code validation
+validate:lint:
+  extends:
+    - .validate
+  script:
+    - helm lint
+
+############################################################################################################
+### Tests with default values file as input ###################################
+## validate output syntax is correct with kubeval
+validate:defaults:kubeval:
+  extends:
+    - .validate
+  script:
+    - helm template odk . | kubeval --ignore-missing-schemas
+
+## score output of the manifests on best practice
+validate:defaults:kubescore:
+  extends:
+    - .validate
+  script:
+      - |
+        helm template odk . | kube-score score - --ignore-test pod-networkpolicy --ignore-test container-ephemeral-storage-request-and-limit -o ci | grep "CRITICAL" || true
+     # --ignore-test container-security-context \ 
+     # --ignore-test container-image-tag \ 
+     # --ignore-test container-image-pull-policy \ 
+     # --ignore-test pod-probes \ 
+     # --ignore-test container-security-context-readonlyrootfilesystem \ 
+     # --ignore-test container-security-context-user-group-id \ 

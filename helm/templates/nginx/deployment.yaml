@@ -6,7 +6,7 @@ metadata:
     version: "1.0"
   name: {{ include "odk.fullname" . }}-nginx
 spec:
-  replicas: 1
+  replicas: {{ .Values.nginx.replicas }}
   selector:
     matchLabels:
       app: {{ include "odk.fullname" . }}-nginx
@@ -24,9 +24,18 @@ spec:
             - name: SENTRY_KEY  
               value: ""
             - name: OIDC_ENABLED
-              value: "false"
+              value: "{{ .Values.odk.secrets.OIDC_ENABLED | default "false" }}"
+            - name: OIDC_ISSUER_URL
+              value: "{{ .Values.odk.secrets.OIDC_ISSUER_URL | default "" }}"
+            - name: OIDC_CLIENT_ID
+              value: "{{ .Values.odk.secrets.OIDC_CLIENT_ID | default "" }}"
+            - name: OIDC_CLIENT_SECRET
+              value: "{{ .Values.odk.secrets.OIDC_CLIENT_SECRET | default "" }}"
             - name: CERTBOT_EMAIL
               valueFrom:
+                configMapKeyRef:
+                  name: {{ include "odk.fullname" . }}
+                  key: SUPPORT_EMAIL
             - name: DOMAIN
               valueFrom:
                 configMapKeyRef:

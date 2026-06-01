@@ -23,6 +23,7 @@ data:
         "offline enabled": true,
         "payload limit": "1mb",
         "port": "8005",
+        "max processes": {{ include "odk.cpuToRoundedProcesses" (.Values.enketo.resources.limits.cpu | default "1") | quote }},
         "query parameter to pass to submission": "st",
         "redis": {
             "main": {

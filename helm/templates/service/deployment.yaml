@@ -6,7 +6,7 @@ metadata:
     version: {{ .Values.image.tag | default .Chart.AppVersion | quote }}
   name: {{ include "odk.fullname" . }}-service
 spec:
-  replicas: 1
+  replicas: {{ .Values.odk.replicas }}
   selector:
     matchLabels:
       app: {{ include "odk.fullname" . }}-service
@@ -63,6 +63,14 @@ spec:
                 configMapKeyRef:
                   name: {{ include "odk.fullname" . }}
                   key: SUPPORT_EMAIL
+            - name: OIDC_ENABLED
+              value: "{{ .Values.odk.secrets.OIDC_ENABLED | default "false" }}"
+            - name: OIDC_ISSUER_URL
+              value: "{{ .Values.odk.secrets.OIDC_ISSUER_URL | default "" }}"
+            - name: OIDC_CLIENT_ID
+              value: "{{ .Values.odk.secrets.OIDC_CLIENT_ID | default "" }}"
+            - name: OIDC_CLIENT_SECRET
+              value: "{{ .Values.odk.secrets.OIDC_CLIENT_SECRET | default "" }}"
 {{ if .Values.postfix.enabled }}
             - name: EMAIL_HOST
               value: {{ include "odk.fullname" . }}-postfix

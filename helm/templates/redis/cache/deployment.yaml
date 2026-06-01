@@ -6,7 +6,7 @@ metadata:
     version: "1.0"
   name: {{ include "odk.fullname" . }}-enketo-redis-cache
 spec:
-  replicas: 1
+  replicas: {{ .Values.redis.cache.replicas }}
   selector:
     matchLabels:
       app: {{ include "odk.fullname" . }}-enketo-redis-cache
@@ -18,7 +18,7 @@ spec:
         app: {{ include "odk.fullname" . }}-enketo-redis-cache
     spec:
       containers:
-      - image: redis:7.0.11
+      - image: {{ default (printf "%s/redis:7.0.11" .Values.image.registry) (printf "%s/%s" .Values.image.registry .Values.redis.image) | quote }}
         name: redis
         command:
           - redis-server

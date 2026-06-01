@@ -1,17 +1,17 @@
+
 image:
-  # -- Registry where the common images can be pulled 
-  registry: "harbor.containers.wurnet.nl/proxy-cache" 
-  # -- Registry where ghcr.io/getodk/* can be pulled from
-  odkregistry: "ghcr.io/getodk" 
+  # Global values for the common registry for example for the postgres and redis images
+  registry: "harbor.containers.wurnet.nl/proxy-cache"
+  # Registry where ghcr.io/getodk/* can be reached
+  odkregistry: "harbor.containers.wurnet.nl/ghcr-proxy/getodk"
   pullPolicy: IfNotPresent
   # -- Overrides the image tag whose default is the chart appVersion.
   # tag: ""
-  
+
 nameOverride: ""
 fullnameOverride: ""
 
 odk:
-  replicas: 1
   # -- Create a secret manually containing the fields shown below (recommended).
   existingSecret: ""
   secrets:
@@ -48,7 +48,9 @@ odk:
     PGSSLMODE: "true"
     # -- SSL mode for the nginx server
     SSL_TYPE: "upstream" # -- options are: none, selfsigned, certbot, upstream
-
+    SENTRY_ORG_SUBDOMAIN: "odk-central"
+    SENTRY_PROJECT: "odk-central-server"
+    SENTRY_KEY: ""
   # -- The initial admin user configuration
   user:
     # -- the username for the initial admin user
@@ -76,7 +78,6 @@ service:
 
 # Configuration for the ODK Central enketo service
 enketo:
-  replicas: 1
   image: harbor.containers.wurnet.nl/ghcr-proxy/enketo/enketo:7.5.1
   resources:
     requests:
@@ -84,11 +85,10 @@ enketo:
       cpu: "500m"
     limits:
       memory: "1024Mi"
-      cpu: "1000m"
+      cpu: "4"
 
 # Configuration for the ODK Central nginx service
 nginx:
-  replicas: 1
   resources:
     requests:
       memory: "32Mi"
@@ -99,7 +99,6 @@ nginx:
 
 # Configuration for the ODK Central mail service
 postfix:
-  replicas: 1
   enabled: true
   serverHostname: odk-sandbox.containers-test.wur.nl
   resources:
@@ -113,14 +112,13 @@ postfix:
 
 # Configuration for the ODK Central redis service
 redis:
-  image: harbor.containers.wurnet.nl/proxy-cache/library/redis:8.6.2
+  image: redis:8.6-alpine
   persistence:
     enabled: true
     size: 500Mi
     storageClass: default
     accessMode: ReadWriteOnce
   cache:
-    replicas: 1
     resources:
       requests:
         memory: "32Mi"
@@ -129,7 +127,6 @@ redis:
         memory: "64Mi"
         cpu: "200m"
   main:
-    replicas: 1
     resources:
       requests:
         memory: "32Mi"

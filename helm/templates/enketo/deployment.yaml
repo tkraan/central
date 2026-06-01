@@ -6,7 +6,7 @@ metadata:
     {{- include "odk.labels" . | nindent 4 }}
   name: {{ include "odk.fullname" . }}-enketo
 spec:
-  replicas: 1
+  replicas: {{ .Values.enketo.replicas }}
   selector:
     matchLabels:
       app: {{ include "odk.fullname" . }}-enketo
@@ -19,11 +19,20 @@ spec:
     spec:
       containers:
         - env:
+            - name: WORKERS
+              value: "4"
+            - name: SERVICE_NODE_OPTIONS
+              value: {{ .Values.enketo.resources.limits.memory | default "1536Mi" | replace "Mi" "" | replace "Gi" "0000" | quote | printf "--max-old-space-size=%s" }}
             - name: DOMAIN
               valueFrom:
                 configMapKeyRef:
                   name: {{ include "odk.fullname" . }}
                   key: DOMAIN
+            - name: SUPPORT_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "odk.fullname" . }}
+                  key: SUPPORT_EMAIL
             - name: SECRET
               valueFrom:
                 secretKeyRef:

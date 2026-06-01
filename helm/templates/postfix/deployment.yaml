@@ -7,7 +7,7 @@ metadata:
     version: "1.0"
   name: {{ include "odk.fullname" . }}-postfix
 spec:
-  replicas: 1
+  replicas: {{ .Values.postfix.replicas }}
   selector:
     matchLabels:
       app: {{ include "odk.fullname" . }}-postfix
@@ -17,7 +17,7 @@ spec:
         app: {{ include "odk.fullname" . }}-postfix
     spec:
       containers:
-        - image: juanluisbaptiste/postfix:latest
+        - image: juanluisbaptiste/postfix:alpine
           name: postfix
           ports:
           - containerPort: 25

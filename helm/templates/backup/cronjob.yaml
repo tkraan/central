@@ -24,11 +24,11 @@ spec:
           containers:
           {{ with .Values.postgresql.backups }}
           - name: psqldump
-            image: {{ .image | default "hawscli:latest" }}
+            image: {{ .image | default "harbor.containers.wurnet.nl/wur/awscli:latest" }}
             imagePullPolicy: Always
             command: ["/bin/bash","-c"]
             {{ end }}
-            args: ["aws --endpoint-url $ENDPOINT_URL s3api put-bucket-lifecycle-configuration --bucket $BUCKET_NAME --lifecycle-configuration file://lifecycle.json && pg_dump --host=$DB_HOST --username=$DB_USER --format=plain $DB_NAME | gzip -9 | aws --endpoint-url $ENDPOINT_URL s3 cp - s3://$BUCKET_NAME/$BUCKET_PATH/$(date +'%Y-%m-%d')-{{ include "odk.fullname" . }}-daily-backup.sql.gz"]
+            args: ["aws --no-verify-ssl --endpoint-url $ENDPOINT_URL s3api put-bucket-lifecycle-configuration --bucket $BUCKET_NAME --lifecycle-configuration file://lifecycle.json && pg_dump --host=$DB_HOST --username=$DB_USER --format=plain $DB_NAME | gzip -9 | aws --no-verify-ssl --endpoint-url $ENDPOINT_URL s3 cp - s3://$BUCKET_NAME/$BUCKET_PATH/$(date +'%Y-%m-%d')-{{ include "odk.fullname" . }}-daily-backup.sql.gz"]
             volumeMounts:
               - name: retention-config
                 mountPath: /aws/lifecycle.json

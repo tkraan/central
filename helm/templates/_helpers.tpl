@@ -60,3 +60,19 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Convert a CPU limit string to a rounded whole-number process count.
+Examples: 500m -> 1, 1500m -> 2, 2 -> 2
+*/}}
+{{- define "odk.cpuToRoundedProcesses" -}}
+{{- $cpu := toString . | trim -}}
+{{- if hasSuffix "m" $cpu -}}
+{{- $milli := float64 (trimSuffix "m" $cpu) -}}
+{{- $rounded := round (divf $milli 1000) 0 -}}
+{{- if lt $rounded 1.0 -}}1{{- else -}}{{ printf "%.0f" $rounded }}{{- end -}}
+{{- else -}}
+{{- $rounded := round (float64 $cpu) 0 -}}
+{{- if lt $rounded 1.0 -}}1{{- else -}}{{ printf "%.0f" $rounded }}{{- end -}}
+{{- end -}}
+{{- end }}
