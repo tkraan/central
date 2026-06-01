@@ -1,144 +1,138 @@
-image:
-  # -- Registry where the common images can be pulled 
-  registry: "harbor.containers.wurnet.nl/proxy-cache" 
-  # -- Registry where ghcr.io/getodk/* can be pulled from
-  odkregistry: "ghcr.io/getodk" 
-  pullPolicy: IfNotPresent
-  # -- Overrides the image tag whose default is the chart appVersion.
-  # tag: ""
-  
-nameOverride: ""
+USER-SUPPLIED VALUES:
+enketo:
+  image: ghcr.io/enketo/enketo:7.5.0
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
 fullnameOverride: ""
-
+image:
+  odkregistry: ghcr.io/getodk
+  pullPolicy: IfNotPresent
+  registry: docker.io
+  tag: ""
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/enable-global-auth: "false"
+    nginx.ingress.kubernetes.io/proxy-body-size: 512m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "25600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "25600"
+  className: public
+  enabled: true
+  hosts:
+  - host: odkcentral.k8s.tinonet.nl
+    paths:
+    - path: /
+      pathType: Prefix
+  tls:
+  - hosts:
+    - odkcentral.k8s.tinonet.nl
+    secretName: odkcentral.k8s.tinonet.nl
+nameOverride: ""
+nginx:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 64Mi
+    requests:
+      cpu: 100m
+      memory: 32Mi
 odk:
-  replicas: 1
-  # -- Create a secret manually containing the fields shown below (recommended).
   existingSecret: ""
   secrets:
-    # -- the domain for the ODK Central instance
-    DOMAIN: odk-sandbox.containers-test.wur.nl
-    # -- the Enketo API key 
-    ENKETO_API_KEY: "enketo_api_key_secret"
-    # -- the Enketo Less API key
-    ENKETO_LESS_SECRET: "enketo_less_secret"
-    # -- The Enketo secret used for the enketo service
-    ENKETO_SECRET: "enketo_secret"
-    # -- the hostname for the final mailserver
-    EMAIL_HOST: ""
-    # -- the user for the final mailserver
-    EMAIL_USER: ""
-    # -- the password for the user on the final mailserver
-    EMAIL_PASSWORD: ""
-    # -- the default email port for the final mailserver
-    EMAIL_PORT: 587
-    # -- whether to use TLS for the final mailserver
-    EMAIL_SECURE: "true"
-    # -- the email address that is used to send emails from the ODK Central instance
-    EMAIL_FROM: "emailfromadress@odk-sandbox.containers-test.wur.nl"
-    # -- the database name for the ODK Central instance
-    DB_NAME: ""
-    # -- the database user for the ODK Central instance
-    DB_USER: ""
-    # -- the database password for the ODK Central instance
-    DB_PASSWORD: ""
-    # -- the database host for the ODK Central instance
     DB_HOST: ""
-    # -- SSL mode for the database connection
-    # -- use true for full verification, false to disable verification, no-verify to skip verification but use SSL
+    DB_NAME: ""
+    DB_PASSWORD: ""
+    DB_USER: ""
+    DOMAIN: odkcentral.k8s.tinonet.nl
+    EMAIL_FROM: odkcentral@yourdomain.tld
+    EMAIL_HOST: ""
+    EMAIL_PASSWORD: ""
+    EMAIL_PORT: 587
+    EMAIL_SECURE: "true"
+    EMAIL_USER: ""
+    ENKETO_API_KEY: enketo_api_key_secret
+    ENKETO_LESS_SECRET: enketo_less_secret
+    ENKETO_SECRET: enketo_secret
     PGSSLMODE: "true"
-    # -- SSL mode for the nginx server
-    SSL_TYPE: "upstream" # -- options are: none, selfsigned, certbot, upstream
-
-  # -- The initial admin user configuration
+    SSL_TYPE: upstream
+    OIDC_ENABLED: true
+    OIDC_ISSUER_URL: https://oidc-tester.compile7.org/app/29bed394-8961-43e7-a79a-71577500caa8
+    OIDC_CLIENT_ID: client_f4208c38c0634e4ba7b8aa528cff576f
+    OIDC_CLIENT_SECRET: a7ca6da6305b6abaee7c62752cdd93c9f49e83bb4c48006ea49cfc4516a30f04
   user:
-    # -- the username for the initial admin user
-    username: "admin@domain.tld" # -- e.g. admin@domain.tld
-    # -- the password for the initial admin user
-    password: "admin12345678"
     existingSecret: ""
-
-# Configuration for the ODK Central service deployment
-# The service is the main component of ODK Central, handling requests and serving the web application.
-service:
-  # Storage configuration for the service
-  persistence:
-    enabled: true
-    size: 500Mi
-    storageClass: default
-    accessMode: ReadWriteOnce
-  resources:
-    requests:
-      memory: "256Mi"
-      cpu: "250m"
-    limits:
-      memory: "2048Mi"
-      cpu: "500m"
-
-# Configuration for the ODK Central enketo service
-enketo:
-  replicas: 1
-  image: harbor.containers.wurnet.nl/ghcr-proxy/enketo/enketo:7.5.1
-  resources:
-    requests:
-      memory: "256Mi"
-      cpu: "500m"
-    limits:
-      memory: "1024Mi"
-      cpu: "1000m"
-
-# Configuration for the ODK Central nginx service
-nginx:
-  replicas: 1
-  resources:
-    requests:
-      memory: "32Mi"
-      cpu: "100m"
-    limits:
-      memory: "64Mi"
-      cpu: "200m"
-
-# Configuration for the ODK Central mail service
+    password: admin12345678
+    username: admin@yourdomain.tld
 postfix:
-  replicas: 1
   enabled: true
-  serverHostname: odk-sandbox.containers-test.wur.nl
+  overwriteFrom: ODK Sandbox <noreply@odkcentral.yourdomain.tld>
   resources:
-    requests:
-      memory: "64Mi"
-      cpu: "50m"
     limits:
-      memory: "128Mi"
-      cpu: "100m"
-  overwriteFrom: "ODK Sandbox <noreply@odk-sandbox.containers-test.wur.nl>"
-
-# Configuration for the ODK Central redis service
-redis:
-  image: harbor.containers.wurnet.nl/proxy-cache/library/redis:8.6.2
-  persistence:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  serverHostname: postfix.k8s.tinonet.nl
+postgresql:
+  architecture: standalone
+  auth:
+    database: odkcentral
+    enablePostgresUser: true
+    password: odkcentral
+    username: odkcentral
+  backups:
+    bucketAccessKeyId: ""
+    bucketEndpoint: https://s3.yourdomain.tld
+    bucketLifeCycle: 30
+    bucketName: ""
+    bucketPath: ""
+    bucketSecretAccessKey: ""
+    enabled: false
+    existingSecret: ""
+    keepJobs: 1
+    resources: {}
+    schedule: 37 03 * * *
+  clusterDomain: cluster.local
+  enabled: true
+  global:
+    imageRegistry: docker.io
+  global.defaultStorageClass: default
+  image:
+    digest: ""
+    repository: bitnamilegacy/postgresql
+  metrics:
+    enabled: false
+  networkPolicy:
     enabled: true
-    size: 500Mi
-    storageClass: default
-    accessMode: ReadWriteOnce
-  cache:
-    replicas: 1
+  primary:
+    persistence:
+      size: 5Gi
     resources:
-      requests:
-        memory: "32Mi"
-        cpu: "100m"
       limits:
-        memory: "64Mi"
-        cpu: "200m"
-  main:
-    replicas: 1
+        cpu: 750m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+  readReplicas:
+    persistence:
+      size: 5Gi
+    replicaCount: 1
     resources:
-      requests:
-        memory: "32Mi"
-        cpu: "100m"
       limits:
-        memory: "64Mi"
-        cpu: "200m"
-
-# Configuration for the ODK Central pyxform service
+        cpu: 750m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
 pyxform:
   image: pyxform-http:v4.4.1
   replicas: 1
@@ -149,99 +143,39 @@ pyxform:
     requests:
       cpu: 250m
       memory: 256Mi
-
-# Configuration for the ODK Central postgresql service
-# Inherited from the Bitnami PostgreSQL chart
-# Values for the postgresql chart can be found here:https://github.com/bitnami/charts/blob/main/bitnami/postgresql/README.md
-postgresql:
-  enabled: true
-  # Backup configuration for the ODK Central PostgreSQL database
-  # Writes postgresql dumps to an S3 compatible bucket.
-  backups:
-    enabled: false
-    # Cronjob schedule for the backup job. Please keep in mind that the system is running in UTC!
-    schedule: "37 03 * * *"
-    # Define how many cronjobs history needs to be retained in Kubernetes.
-    keepJobs: 1
-    bucketName: ""
-    bucketPath: ""
-    # These following 3 keys are ignored if a existingsecret is defined
-    bucketEndpoint: "https://scality02.wurnet.nl" # Leave empty when existingSecret is set
-    bucketAccessKeyId: "" # Leave empty when existingSecret is set
-    bucketSecretAccessKey: "" # Leave empty when existingSecret is set
-    ## Existing Secret
-    # Create a seperate secret that contains the following keys:
-    # ENDPOINT_URL = [URL of S3 endpoint]
-    # AWS_ACCESS_KEY_ID = [Access ID of S3 Endpoint]
-    # AWS_SECRET_ACCESS_KEY = [Access Key of S3 Endpoint]
-    existingSecret: ""
-    bucketLifeCycle: 30 # Number of days to keep versions in bucket
-    resources: {} # Some default values are set, but you can override them.
-  global:
-    imageRegistry: "harbor.containers.wurnet.nl/proxy-cache"
-  image:
-    # PostgreSQL image to use; bitnamilegacy is used to keep compatibility with older versions
-    repository: bitnamilegacy/postgresql
-    digest: ""
-  clusterDomain: cluster.local
-  auth:
-    enablePostgresUser: true
-    username: "odkcentral"
-    database: "odkcentral"
-    password: "odkcentral" # Only set when existingSecret is not configured.
-    # replicationPassword: "tpsgodkcentral" # Only set when architecture is set to "replication".
-
-    ## Name of existing secret to use for PostgreSQL credentials.
-    ## `auth.postgresPassword`, `auth.password`, and `auth.replicationPassword` will be ignored and picked up from this secret.
-    ## The secret might also contains the key `ldap-password` if LDAP is enabled. `ldap.bind_password` will be ignored and picked from this secret in this case.
-    # existingSecret: postgres
-
-  architecture: standalone
-  primary:
+redis:
+  cache:
     resources:
       limits:
-        memory: 512Mi
-        cpu: 750m
+        cpu: 200m
+        memory: 64Mi
       requests:
-        memory: 256Mi
-        cpu: 250m
-    persistence:
-      size: 5Gi
-  readReplicas:
-    replicaCount: 1
+        cpu: 100m
+        memory: 32Mi
+  image: redis:8.6.2
+  main:
     resources:
       limits:
-        memory: 512Mi
-        cpu: 750m
+        cpu: 200m
+        memory: 64Mi
       requests:
-        memory: 256Mi
-        cpu: 250m
-    persistence:
-      size: 5Gi
-  networkPolicy:
+        cpu: 100m
+        memory: 32Mi
+  persistence:
+    accessMode: ReadWriteOnce
     enabled: true
-  metrics:
-    enabled: false
-
-# Configuration for the ODK Central ingress
-ingress:
-  enabled: true
-  className: nginx-public
-  annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: 512m
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "25600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "25600"
-    cert-manager.io/cluster-issuer: harica
-    cert-manager.io/usages: digital signature
-    ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/backend-protocol: HTTP
-    nginx.ingress.kubernetes.io/enable-global-auth: "false"
-  hosts:
-    - host: odk-sandbox.containers-test.wur.nl
-      paths:
-        - path: /
-          pathType: Prefix
-  tls:
-    - secretName: odk-sandbox.containers-test.wur.nl
-      hosts:
-        - odk-sandbox.containers-test.wur.nl
+    size: 500Mi
+    storageClass: proxmox-data-usb
+service:
+  persistence:
+    accessMode: ReadWriteOnce
+    enabled: true
+    size: 500Mi
+    storageClass: proxmox-data-usb
+  resources:
+    limits:
+      cpu: 500m
+      memory: 2048Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
