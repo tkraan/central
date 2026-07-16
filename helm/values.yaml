@@ -44,6 +44,7 @@ nginx:
       cpu: 100m
       memory: 32Mi
 odk:
+  replicas: 1
   existingSecret: ""
   secrets:
     DB_HOST: ""
@@ -63,9 +64,10 @@ odk:
     PGSSLMODE: "true"
     SSL_TYPE: upstream
     OIDC_ENABLED: true
-    OIDC_ISSUER_URL: https://oidc-tester.compile7.org/app/29bed394-8961-43e7-a79a-71577500caa8
-    OIDC_CLIENT_ID: client_f4208c38c0634e4ba7b8aa528cff576f
-    OIDC_CLIENT_SECRET: a7ca6da6305b6abaee7c62752cdd93c9f49e83bb4c48006ea49cfc4516a30f04
+    OIDC_ISSUER_URL: ""
+    OIDC_CLIENT_ID: ""
+    OIDC_CLIENT_SECRET: ""
+    DB_SSL: "true"
   user:
     existingSecret: ""
     password: admin12345678
@@ -165,13 +167,13 @@ redis:
     accessMode: ReadWriteOnce
     enabled: true
     size: 500Mi
-    storageClass: proxmox-data-usb
+    storageClass: default
 service:
   persistence:
     accessMode: ReadWriteOnce
     enabled: true
     size: 500Mi
-    storageClass: proxmox-data-usb
+    storageClass: default
   resources:
     limits:
       cpu: 500m

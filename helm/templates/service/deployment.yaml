@@ -34,9 +34,6 @@ spec:
             nohup bash -c "until nc -z -w 5 localhost 8383; do sleep 5; done; echo 'Creating admin user if not exists...'; (printf $ODK_ADMIN_PASSWORD | odk-cmd user-create -u $ODK_ADMIN_USERNAME) || true; odk-cmd user-promote -u $ODK_ADMIN_USERNAME || true" &
             ./start-odk.sh
           env:
-{{- if .Values.service.env }}
-{{ .Values.service.env | toYaml | indent 12 }}                      
-{{- end }}
             - name: POSTGRES_SERVICE
             {{- if and .Values.postgresql.enabled (eq .Values.postgresql.architecture "replication") }}
               value: {{ .Release.Name  }}-postgresql-primary-hl 
@@ -118,6 +115,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.odk.existingSecret }}
                   key: {{ .Values.odk.secrets.SSL_TYPE | quote }} 
+            - name: DB_SSL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.odk.existingSecret }}
+                  key: {{ .Values.odk.secrets.DB_SSL | quote }}
 {{- else }}
             - name: EMAIL_HOST
               value: {{ .Values.odk.secrets.EMAIL_HOST }}
@@ -133,6 +135,8 @@ spec:
               value: {{ .Values.odk.secrets.PGSSLMODE | quote }}
             - name: SSL_TYPE
               value: {{ .Values.odk.secrets.SSL_TYPE | quote }}
+            - name: DB_SSL
+              value: {{ .Values.odk.secrets.DB_SSL | quote }}
 {{- end }}
 {{ if .Values.odk.user.existingSecret }}
             - name: ODK_ADMIN_USERNAME
