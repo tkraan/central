@@ -34,6 +34,22 @@ spec:
             nohup bash -c "until nc -z -w 5 localhost 8383; do sleep 5; done; echo 'Creating admin user if not exists...'; (printf $ODK_ADMIN_PASSWORD | odk-cmd user-create -u $ODK_ADMIN_USERNAME) || true; odk-cmd user-promote -u $ODK_ADMIN_USERNAME || true" &
             ./start-odk.sh
           env:
+            - name: OIDC_ENABLED
+              value: "{{ .Values.odk.secrets.OIDC_ENABLED | default "false" }}"
+            - name: OIDC_ISSUER_URL
+              value: "{{ .Values.odk.secrets.OIDC_ISSUER_URL | default "" }}"
+            - name: OIDC_CLIENT_ID
+              value: "{{ .Values.odk.secrets.OIDC_CLIENT_ID | default "" }}"
+            - name: OIDC_CLIENT_SECRET
+              value: "{{ .Values.odk.secrets.OIDC_CLIENT_SECRET | default "" }}"
+            - name: S3_SERVER
+              value: "{{ .Values.odk.secrets.S3_SERVER | default "" }}"
+            - name: S3_ACCESS_KEY
+              value: "{{ .Values.odk.secrets.S3_ACCESS_KEY | default "" }}"
+            - name: S3_SECRET_KEY 
+              value: "{{ .Values.odk.secrets.S3_SECRET_KEY | default "" }}"
+            - name: S3_BUCKET_NAME
+              value: "{{ .Values.odk.secrets.S3_BUCKET_NAME | default "" }}"
             - name: POSTGRES_SERVICE
             {{- if and .Values.postgresql.enabled (eq .Values.postgresql.architecture "replication") }}
               value: {{ .Release.Name  }}-postgresql-primary-hl 
@@ -60,14 +76,6 @@ spec:
                 configMapKeyRef:
                   name: {{ include "odk.fullname" . }}
                   key: SUPPORT_EMAIL
-            - name: OIDC_ENABLED
-              value: "{{ .Values.odk.secrets.OIDC_ENABLED | default "false" }}"
-            - name: OIDC_ISSUER_URL
-              value: "{{ .Values.odk.secrets.OIDC_ISSUER_URL | default "" }}"
-            - name: OIDC_CLIENT_ID
-              value: "{{ .Values.odk.secrets.OIDC_CLIENT_ID | default "" }}"
-            - name: OIDC_CLIENT_SECRET
-              value: "{{ .Values.odk.secrets.OIDC_CLIENT_SECRET | default "" }}"
 {{ if .Values.postfix.enabled }}
             - name: EMAIL_HOST
               value: {{ include "odk.fullname" . }}-postfix

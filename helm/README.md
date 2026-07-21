@@ -1,13 +1,6 @@
-# ODK Central - Helm Chart
-
-Central is the ODK server. It manages user accounts and permissions, stores form definitions, and allows data collection clients like ODK Collect to connect to it for form download and submission upload.
-
-## Installation
-
-To install this Helm chart, run: helm install odkcentral oci://harbor.containers.wurnet.nl/wur/odk -f values.yaml
 # odk
 
-![Version: 0.0.0](https://img.shields.io/badge/Version-0.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v2025.4.2](https://img.shields.io/badge/AppVersion-v2025.4.2-informational?style=flat-square)
+![Version: 3.3.1](https://img.shields.io/badge/Version-3.3.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v2026.1.1](https://img.shields.io/badge/AppVersion-v2026.1.1-informational?style=flat-square)
 
 The standard for mobile data collection
 
@@ -28,6 +21,7 @@ The standard for mobile data collection
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | enketo.image | string | `"harbor.containers.wurnet.nl/ghcr-proxy/enketo/enketo:7.5.1"` |  |
+| enketo.replicas | int | `1` |  |
 | enketo.resources.limits.cpu | string | `"1000m"` |  |
 | enketo.resources.limits.memory | string | `"1024Mi"` |  |
 | enketo.resources.requests.cpu | string | `"500m"` |  |
@@ -36,7 +30,6 @@ The standard for mobile data collection
 | image.odkregistry | string | `"ghcr.io/getodk"` | Registry where ghcr.io/getodk/* can be pulled from |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.registry | string | `"harbor.containers.wurnet.nl/proxy-cache"` | Registry where the common images can be pulled  |
-| image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
 | ingress.annotations."cert-manager.io/cluster-issuer" | string | `"harica"` |  |
 | ingress.annotations."cert-manager.io/usages" | string | `"digital signature"` |  |
 | ingress.annotations."ingress.kubernetes.io/ssl-redirect" | string | `"true"` |  |
@@ -53,14 +46,17 @@ The standard for mobile data collection
 | ingress.tls[0].hosts[0] | string | `"odk-sandbox.containers-test.wur.nl"` |  |
 | ingress.tls[0].secretName | string | `"odk-sandbox.containers-test.wur.nl"` |  |
 | nameOverride | string | `""` |  |
+| nginx.replicas | int | `1` |  |
 | nginx.resources.limits.cpu | string | `"200m"` |  |
 | nginx.resources.limits.memory | string | `"64Mi"` |  |
 | nginx.resources.requests.cpu | string | `"100m"` |  |
 | nginx.resources.requests.memory | string | `"32Mi"` |  |
-| odk.existingSecret | string | `""` | Create a secret manually containing the fields shown below (recommended). |
+| odk.existingSecret | object | `{}` | Create a secret manually containing the fields shown below (recommended). |
+| odk.replicas | int | `1` |  |
 | odk.secrets.DB_HOST | string | `""` | the database host for the ODK Central instance |
 | odk.secrets.DB_NAME | string | `""` | the database name for the ODK Central instance |
 | odk.secrets.DB_PASSWORD | string | `""` | the database password for the ODK Central instance |
+| odk.secrets.DB_SSL | string | `"null"` | Default is null. Can be set to false or "no-verify" |
 | odk.secrets.DB_USER | string | `""` | the database user for the ODK Central instance |
 | odk.secrets.DOMAIN | string | `"odk-sandbox.containers-test.wur.nl"` | the domain for the ODK Central instance |
 | odk.secrets.EMAIL_FROM | string | `"emailfromadress@odk-sandbox.containers-test.wur.nl"` | the email address that is used to send emails from the ODK Central instance |
@@ -72,6 +68,10 @@ The standard for mobile data collection
 | odk.secrets.ENKETO_API_KEY | string | `"enketo_api_key_secret"` | the Enketo API key  |
 | odk.secrets.ENKETO_LESS_SECRET | string | `"enketo_less_secret"` | the Enketo Less API key |
 | odk.secrets.ENKETO_SECRET | string | `"enketo_secret"` | The Enketo secret used for the enketo service |
+| odk.secrets.OIDC_CLIENT_ID | string | `""` |  |
+| odk.secrets.OIDC_CLIENT_SECRET | string | `""` |  |
+| odk.secrets.OIDC_ENABLED | string | `"false"` | oidC configuration for the ODK Central instance |
+| odk.secrets.OIDC_ISSUER_URL | string | `""` |  |
 | odk.secrets.PGSSLMODE | string | `"true"` | use true for full verification, false to disable verification, no-verify to skip verification but use SSL |
 | odk.secrets.SSL_TYPE | string | `"upstream"` | SSL mode for the nginx server |
 | odk.user | object | `{"existingSecret":"","password":"admin12345678","username":"admin@domain.tld"}` | The initial admin user configuration |
@@ -79,6 +79,7 @@ The standard for mobile data collection
 | odk.user.username | string | `"admin@domain.tld"` | the username for the initial admin user |
 | postfix.enabled | bool | `true` |  |
 | postfix.overwriteFrom | string | `"ODK Sandbox <noreply@odk-sandbox.containers-test.wur.nl>"` |  |
+| postfix.replicas | int | `1` |  |
 | postfix.resources.limits.cpu | string | `"100m"` |  |
 | postfix.resources.limits.memory | string | `"128Mi"` |  |
 | postfix.resources.requests.cpu | string | `"50m"` |  |
@@ -118,15 +119,19 @@ The standard for mobile data collection
 | postgresql.readReplicas.resources.limits.memory | string | `"512Mi"` |  |
 | postgresql.readReplicas.resources.requests.cpu | string | `"250m"` |  |
 | postgresql.readReplicas.resources.requests.memory | string | `"256Mi"` |  |
+| pyxform.image | string | `"pyxform-http:v4.4.1"` |  |
 | pyxform.replicas | int | `1` |  |
 | pyxform.resources.limits.cpu | string | `"1000m"` |  |
 | pyxform.resources.limits.memory | string | `"1024Mi"` |  |
 | pyxform.resources.requests.cpu | string | `"250m"` |  |
 | pyxform.resources.requests.memory | string | `"256Mi"` |  |
+| redis.cache.replicas | int | `1` |  |
 | redis.cache.resources.limits.cpu | string | `"200m"` |  |
 | redis.cache.resources.limits.memory | string | `"64Mi"` |  |
 | redis.cache.resources.requests.cpu | string | `"100m"` |  |
 | redis.cache.resources.requests.memory | string | `"32Mi"` |  |
+| redis.image | string | `"harbor.containers.wurnet.nl/proxy-cache/library/redis:8.6.2"` |  |
+| redis.main.replicas | int | `1` |  |
 | redis.main.resources.limits.cpu | string | `"200m"` |  |
 | redis.main.resources.limits.memory | string | `"64Mi"` |  |
 | redis.main.resources.requests.cpu | string | `"100m"` |  |
@@ -135,8 +140,6 @@ The standard for mobile data collection
 | redis.persistence.enabled | bool | `true` |  |
 | redis.persistence.size | string | `"500Mi"` |  |
 | redis.persistence.storageClass | string | `"default"` |  |
-| service.env[0].name | string | `"SERVICE_NODE_OPTIONS"` |  |
-| service.env[0].value | string | `"--max-old-space-size=1536"` |  |
 | service.persistence.accessMode | string | `"ReadWriteOnce"` |  |
 | service.persistence.enabled | bool | `true` |  |
 | service.persistence.size | string | `"500Mi"` |  |
